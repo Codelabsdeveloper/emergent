@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Registration {
+  id          String   @id @default(uuid())
+  name        String
+  gender      String
+  age         Int
+  phoneNumber String   @map("phone_number")
+  address     String
+  occupation  String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([createdAt])
+  @@index([name])
+  @@index([phoneNumber])
+  @@index([gender])
+  @@map("registrations")
+}
+
+model Admin {
+  id                  String    @id @default(uuid())
+  username            String    @unique
+  passwordHash        String    @map("password_hash")
+  mustChangePassword  Boolean   @default(true) @map("must_change_password")
+  failedLoginAttempts Int       @default(0) @map("failed_login_attempts")
+  lockedUntil         DateTime? @map("locked_until")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  @@map("admins")
+}

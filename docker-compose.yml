@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: emergent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: emergent
+      POSTGRES_PASSWORD: emergent_dev_password
+      POSTGRES_DB: emergent
+    ports:
+      - "5432:5432"
+    volumes:
+      - emergent_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U emergent -d emergent"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  emergent_pg_data:
