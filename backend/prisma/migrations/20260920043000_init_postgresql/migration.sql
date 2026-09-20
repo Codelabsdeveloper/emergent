@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "registrations" (
     "id" UUID NOT NULL,
     "name" VARCHAR(100) NOT NULL,
