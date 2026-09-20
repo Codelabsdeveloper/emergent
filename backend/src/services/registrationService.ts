@@ -19,6 +19,8 @@ export async function createRegistration(input: RegistrationInput) {
       },
       select: {
         id: true,
+        name: true,
+        phoneNumber: true,
         createdAt: true,
       },
     });

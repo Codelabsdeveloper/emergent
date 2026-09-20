@@ -8,10 +8,12 @@ router.post('/', async (req, res, next) => {
   try {
     const data = registrationSchema.parse(req.body);
     const registration = await createRegistration(data);
+
     res.status(201).json({
       success: true,
       data: {
         registrationId: registration.id,
+        name: registration.name,
         message: 'Registration successful!',
       },
     });

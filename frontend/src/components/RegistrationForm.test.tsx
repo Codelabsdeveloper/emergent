@@ -6,6 +6,7 @@ import RegistrationForm from '../components/RegistrationForm';
 import Header from '../components/Header';
 import AdminLoginPage from '../pages/AdminLoginPage';
 import { AuthProvider } from '../context/AuthContext';
+import { buildWhatsAppShareUrl } from '../lib/whatsappShare';
 
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api');
@@ -21,6 +22,16 @@ vi.mock('../lib/api', async () => {
 
 import api from '../lib/api';
 
+async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(/^name$/i), 'Jane Doe');
+  await user.click(screen.getByLabelText(/^female$/i));
+  await user.type(screen.getByLabelText(/^age$/i), '30');
+  await user.type(screen.getByLabelText(/phone number/i), '+14155552671');
+  await user.type(screen.getByLabelText(/^address$/i), '123 Market Street');
+  await user.type(screen.getByLabelText(/^occupation$/i), 'Designer');
+  await user.click(screen.getByRole('checkbox'));
+}
+
 describe('RegistrationForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,48 +44,78 @@ describe('RegistrationForm', () => {
     expect(await screen.findAllByText(/required|at least|select/i)).not.toHaveLength(0);
   });
 
-  it('submits successfully and shows registration id', async () => {
+  it('shows confirmation screen with name, id, and WhatsApp share link after success', async () => {
     const user = userEvent.setup();
+    const registrationId = '11111111-1111-4111-8111-111111111111';
     vi.mocked(api.post).mockResolvedValue({
-      data: { success: true, data: { registrationId: '11111111-1111-4111-8111-111111111111', message: 'Registration successful!' } },
+      data: {
+        success: true,
+        data: {
+          registrationId,
+          name: 'Jane Doe',
+          message: 'Registration successful!',
+        },
+      },
     } as never);
 
     render(<RegistrationForm />);
-
-    await user.type(screen.getByLabelText(/^name$/i), 'Jane Doe');
-    await user.click(screen.getByLabelText(/^female$/i));
-    await user.type(screen.getByLabelText(/^age$/i), '30');
-    await user.type(screen.getByLabelText(/phone number/i), '+14155552671');
-    await user.type(screen.getByLabelText(/^address$/i), '123 Market Street');
-    await user.type(screen.getByLabelText(/^occupation$/i), 'Designer');
-    await user.click(screen.getByRole('checkbox'));
+    await fillValidForm(user);
     await user.click(screen.getByRole('button', { name: /register now/i }));
 
-    expect(await screen.findByText(/registration successful/i)).toBeInTheDocument();
-    expect(screen.getByText('11111111-1111-4111-8111-111111111111')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /registration successful/i })).toBeInTheDocument();
+    expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    expect(screen.getByText(registrationId)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /register now/i })).not.toBeInTheDocument();
+
+    const share = screen.getByTestId('whatsapp-share-link');
+    expect(share).toHaveAttribute('href', buildWhatsAppShareUrl('Jane Doe', registrationId));
+    expect(share).toHaveAttribute('target', '_blank');
   });
 
-  it('shows an error message when the API fails', async () => {
+  it('prevents duplicate submissions while a request is in progress', async () => {
     const user = userEvent.setup();
-    vi.mocked(api.post).mockRejectedValue({
-      isAxiosError: true,
-      response: { data: { success: false, error: { message: 'Unable to save registration.' } } },
+    let resolvePost: (value: unknown) => void = () => undefined;
+    vi.mocked(api.post).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvePost = resolve;
+        }) as never
+    );
+
+    render(<RegistrationForm />);
+    await fillValidForm(user);
+
+    const submit = screen.getByRole('button', { name: /register now/i });
+    await user.click(submit);
+    expect(submit).toBeDisabled();
+    expect(api.post).toHaveBeenCalledTimes(1);
+
+    resolvePost({
+      data: {
+        success: true,
+        data: {
+          registrationId: '11111111-1111-4111-8111-111111111111',
+          name: 'Jane Doe',
+          message: 'Registration successful!',
+        },
+      },
     });
 
-    // Make axios.isAxiosError return true for our fake error via getErrorMessage path —
-    // we rely on getErrorMessage fallback when not axios error shape from real axios.
-    render(<RegistrationForm />);
+    expect(await screen.findByRole('heading', { name: /registration successful/i })).toBeInTheDocument();
+  });
 
-    await user.type(screen.getByLabelText(/^name$/i), 'Jane Doe');
-    await user.click(screen.getByLabelText(/^male$/i));
-    await user.type(screen.getByLabelText(/^age$/i), '30');
-    await user.type(screen.getByLabelText(/phone number/i), '+14155552671');
-    await user.type(screen.getByLabelText(/^address$/i), '123 Market Street');
-    await user.type(screen.getByLabelText(/^occupation$/i), 'Designer');
-    await user.click(screen.getByRole('checkbox'));
+  it('shows an error and no success screen when the API fails', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.post).mockRejectedValue(new Error('network'));
+
+    render(<RegistrationForm />);
+    await fillValidForm(user);
     await user.click(screen.getByRole('button', { name: /register now/i }));
 
     expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /registration successful/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('whatsapp-share-link')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /register now/i })).toBeInTheDocument();
   });
 });
 

@@ -36,6 +36,8 @@ describe('API integration (mocked database)', () => {
     const id = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
     vi.mocked(prisma.registration.create).mockResolvedValue({
       id,
+      name: 'Alex Rivera',
+      phoneNumber: '+14155552671',
       createdAt: new Date(),
     } as never);
 
@@ -51,6 +53,7 @@ describe('API integration (mocked database)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body.data.registrationId).toBe(id);
+    expect(res.body.data.name).toBe('Alex Rivera');
     expect(res.body.data.message).toBe('Registration successful!');
   });
 
