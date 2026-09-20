@@ -24,6 +24,12 @@ function createSessionStore(override?: Store): Store {
   if (override) return override;
   if (env.nodeEnv === 'test') return new MemoryStore();
 
+  if (!env.databaseUrl.startsWith('postgres')) {
+    throw new Error(
+      'PostgreSQL session store requires a postgres DATABASE_URL. MemoryStore is not used outside tests.'
+    );
+  }
+
   // Persist sessions in PostgreSQL for production / multi-instance safety
   return new PgSession({
     conString: env.databaseUrl,
@@ -126,6 +132,10 @@ export function createApp(options: CreateAppOptions = {}) {
 export async function startServer() {
   const app = createApp();
   app.listen(env.port, '0.0.0.0', () => {
-    logger.info(`Server listening on port ${env.port}`, { env: env.nodeEnv });
+    logger.info(`Server listening on port ${env.port}`, {
+      env: env.nodeEnv,
+      databaseProvider: env.databaseUrl.startsWith('postgres') ? 'postgresql' : 'other',
+      sessionStore: env.nodeEnv === 'test' ? 'memory' : 'postgresql',
+    });
   });
 }

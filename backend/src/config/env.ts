@@ -14,14 +14,22 @@ function required(name: string, fallback?: string): string {
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const databaseUrl = required(
+  'DATABASE_URL',
+  'postgresql://emergent:emergent_dev_password@localhost:5432/emergent'
+);
+
+if (isProduction && databaseUrl.startsWith('file:')) {
+  throw new Error(
+    'Invalid DATABASE_URL for production: SQLite file: URLs are not allowed. Set DATABASE_URL to the Render PostgreSQL connection string.'
+  );
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction,
   port: Number(process.env.PORT || 4000),
-  databaseUrl: required(
-    'DATABASE_URL',
-    'postgresql://emergent:emergent_dev_password@localhost:5432/emergent'
-  ),
+  databaseUrl,
   sessionSecret: required('SESSION_SECRET', 'dev-only-change-me-session-secret-32chars'),
   corsOrigin: required('CORS_ORIGIN', 'http://localhost:5173'),
   cookieSecure: process.env.COOKIE_SECURE === 'true' || isProduction,
