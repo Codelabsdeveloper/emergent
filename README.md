@@ -16,21 +16,22 @@ Production-ready full-stack web application for **Emergent Technologies**: publi
 
 ```
 emergent/
-â”œâ”€â”€ backend/                 # Express API + Prisma
-â”‚   â”œâ”€â”€ prisma/              # Schema, migrations, seed
-â”‚   â””â”€â”€ src/                 # Routes, services, middleware
-â”œâ”€â”€ frontend/                # React SPA
-â”‚   â”œâ”€â”€ src/                 # Pages, components, forms
-â”‚   â””â”€â”€ e2e/                 # Playwright smoke tests
-â”œâ”€â”€ docker-compose.yml       # Local PostgreSQL
-â”œâ”€â”€ .env.example             # Placeholder environment variables
-â””â”€â”€ README.md
+├── backend/                 # Express API + Prisma
+│   ├── prisma/              # Schema, migrations, seed
+│   └── src/                 # Routes, services, middleware
+├── frontend/                # React SPA
+│   ├── src/                 # Pages, components, forms
+│   └── e2e/                 # Playwright smoke tests
+├── docker-compose.yml       # Local PostgreSQL
+├── .env.example             # Placeholder environment variables
+└── README.md
 ```
 
 ## Prerequisites
 
 - Node.js 20+
 - npm 10+
+- Docker Desktop (for local PostgreSQL) — the daemon must be running before `docker compose`
 
 Local development uses **PostgreSQL**. Use `docker compose up -d` for a local database, or point `DATABASE_URL` at any Postgres instance (including Render).
 
@@ -42,18 +43,29 @@ Local development uses **PostgreSQL**. Use `docker compose up -d` for a local da
 cd emergent
 ```
 
-### 2. Start PostgreSQL and install
+### 2. Start PostgreSQL, install, and seed
+
+Prisma CLI reads `backend/.env`. Copy the example file to the repo root **and** into `backend/`.
 
 ```bash
 docker compose up -d
+npm install
 npm --prefix backend install
 npm --prefix frontend install
 copy .env.example .env
+copy .env backend\.env
 cd backend
+npx prisma generate
 npx prisma migrate deploy
 npm run prisma:seed
 cd ..
 ```
+
+On macOS or Linux, use `cp .env.example .env` and `cp .env backend/.env` instead of `copy`.
+
+Wait until the `emergent-postgres` container is healthy (`docker compose ps`) before running migrations.
+
+Root `npm install` is required so `npm run dev` can start both servers with `concurrently`.
 
 ### 3. Run both servers
 
@@ -74,7 +86,7 @@ Default bootstrap admin (development only):
 
 ## Environment variables
 
-Copy `.env.example` to `.env` and set values for your environment.
+Copy `.env.example` to `.env` (repo root) and `backend/.env`, then set values for your environment. Prisma CLI uses `backend/.env`; the API also loads the root `.env`.
 
 | Variable | Purpose |
 | --- | --- |
@@ -83,6 +95,7 @@ Copy `.env.example` to `.env` and set values for your environment.
 | `CORS_ORIGIN` | Allowed frontend origin |
 | `SESSION_SECRET` | Long random secret for signing sessions |
 | `COOKIE_SECURE` | `true` in production (HTTPS) |
+| `COOKIE_SAME_SITE` | `lax` locally; `none` when the API and frontend are on different domains |
 | `TRUST_PROXY` | `true` behind reverse proxies / PaaS |
 | `SESSION_MAX_AGE_MS` | Session lifetime |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Used **only** by the seed script |
@@ -93,7 +106,7 @@ Never commit real production secrets.
 ## Admin credentials
 
 1. Seed creates the initial admin from `ADMIN_USERNAME` / `ADMIN_PASSWORD`.
-2. Password is stored as a **bcrypt** hash â€” never plaintext.
+2. Password is stored as a **bcrypt** hash — never plaintext.
 3. After login, the admin goes directly to `/admin/dashboard`.
 4. Public admin registration is not available.
 
@@ -103,8 +116,8 @@ For production, set strong unique values in the hosting environment **before** r
 
 ### Public
 
-- `POST /api/registrations` â€” create registration
-- `GET /api/health` â€” health check
+- `POST /api/registrations` — create registration
+- `GET /api/health` — health check
 
 ### Auth
 
@@ -170,9 +183,9 @@ Summary:
 
 Configure the reverse proxy so:
 
-- `/` â†’ frontend
-- `/admin` and `/admin/*` â†’ frontend SPA
-- `/api/*` â†’ backend
+- `/` → frontend
+- `/admin` and `/admin/*` → frontend SPA
+- `/api/*` → backend
 
 This keeps cookies first-party and simplifies CORS (`CORS_ORIGIN=https://yourdomain.com`).
 
