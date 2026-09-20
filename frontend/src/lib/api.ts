@@ -1,7 +1,11 @@
 import axios from 'axios';
 
+const PRODUCTION_API_BASE_URL = 'https://emergent-api-vaiv.onrender.com/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    (import.meta.env.PROD ? PRODUCTION_API_BASE_URL : '/api'),
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

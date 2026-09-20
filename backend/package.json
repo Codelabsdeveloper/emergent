@@ -11,6 +11,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:heal-init": "tsx scripts/heal-failed-init-migration.ts",
+    "start:render": "npm run prisma:heal-init && npm run prisma:seed && npm start",
     "prisma:seed": "tsx prisma/seed.ts",
     "test": "vitest run --config vitest.config.mts",
     "test:watch": "vitest --config vitest.config.mts",

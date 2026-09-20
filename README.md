@@ -170,7 +170,7 @@ Netlify only hosts the **frontend**. Requests to `https://your-site.netlify.app/
 Summary:
 
 1. Deploy the Express API on **Render** (not Netlify).
-2. On Netlify set `VITE_API_BASE_URL=https://YOUR-RENDER-URL/api` and redeploy.
+2. On Netlify set `VITE_API_BASE_URL=https://emergent-api-vaiv.onrender.com/api` and redeploy.
 3. On Render set `CORS_ORIGIN=https://emergenttechnologies.netlify.app`, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=none`.
 
 ### Frontend deploy checklist

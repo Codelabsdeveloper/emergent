@@ -3,6 +3,16 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  VITE_API_BASE_URL = "https://emergent-api-vaiv.onrender.com/api"
+
+# Forward leftover /api calls to Render (must stay above the SPA fallback)
+[[redirects]]
+  from = "/api/*"
+  to = "https://emergent-api-vaiv.onrender.com/api/:splat"
+  status = 200
+  force = true
+
 # SPA fallback — fixes 404 on /admin, /admin/dashboard, refresh, deep links
 [[redirects]]
   from = "/*"
