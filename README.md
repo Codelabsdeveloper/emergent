@@ -1,4 +1,4 @@
-# Emergent Technologies
+﻿# Emergent Technologies
 
 Production-ready full-stack web application for **Emergent Technologies**: public marketing site, user registration with PostgreSQL persistence, and a secure admin portal.
 
@@ -16,15 +16,15 @@ Production-ready full-stack web application for **Emergent Technologies**: publi
 
 ```
 emergent/
-├── backend/                 # Express API + Prisma
-│   ├── prisma/              # Schema, migrations, seed
-│   └── src/                 # Routes, services, middleware
-├── frontend/                # React SPA
-│   ├── src/                 # Pages, components, forms
-│   └── e2e/                 # Playwright smoke tests
-├── docker-compose.yml       # Local PostgreSQL
-├── .env.example             # Placeholder environment variables
-└── README.md
+â”œâ”€â”€ backend/                 # Express API + Prisma
+â”‚   â”œâ”€â”€ prisma/              # Schema, migrations, seed
+â”‚   â””â”€â”€ src/                 # Routes, services, middleware
+â”œâ”€â”€ frontend/                # React SPA
+â”‚   â”œâ”€â”€ src/                 # Pages, components, forms
+â”‚   â””â”€â”€ e2e/                 # Playwright smoke tests
+â”œâ”€â”€ docker-compose.yml       # Local PostgreSQL
+â”œâ”€â”€ .env.example             # Placeholder environment variables
+â””â”€â”€ README.md
 ```
 
 ## Prerequisites
@@ -32,11 +32,9 @@ emergent/
 - Node.js 20+
 - npm 10+
 
-Local development uses **SQLite** (no Docker/PostgreSQL required). For production you can point `DATABASE_URL` at managed PostgreSQL after adapting the Prisma provider if desired.
+Local development uses **PostgreSQL**. Use `docker compose up -d` for a local database, or point `DATABASE_URL` at any Postgres instance (including Render).
 
 ## Quick start (local)
-
-No Docker required. The local database is a SQLite file.
 
 ### 1. Open the project folder
 
@@ -44,14 +42,15 @@ No Docker required. The local database is a SQLite file.
 cd emergent
 ```
 
-### 2. Install and initialize
+### 2. Start PostgreSQL and install
 
 ```bash
+docker compose up -d
 npm --prefix backend install
 npm --prefix frontend install
 copy .env.example .env
 cd backend
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 npm run prisma:seed
 cd ..
 ```
@@ -73,8 +72,6 @@ Default bootstrap admin (development only):
 - Username: `Emergent`
 - Password: `Password1`
 
-On first login the admin **must** change this password before the dashboard is available.
-
 ## Environment variables
 
 Copy `.env.example` to `.env` and set values for your environment.
@@ -93,30 +90,27 @@ Copy `.env.example` to `.env` and set values for your environment.
 
 Never commit real production secrets.
 
-## Admin credentials and password change
+## Admin credentials
 
 1. Seed creates the initial admin from `ADMIN_USERNAME` / `ADMIN_PASSWORD`.
-2. Password is stored as a **bcrypt** hash — never plaintext.
-3. `mustChangePassword` is `true` after seeding.
-4. First successful login redirects to `/admin/change-password`.
-5. After a successful change, the admin can access `/admin/dashboard`.
-6. Public admin registration is not available.
+2. Password is stored as a **bcrypt** hash â€” never plaintext.
+3. After login, the admin goes directly to `/admin/dashboard`.
+4. Public admin registration is not available.
 
-For production, set strong unique values in the hosting environment **before** running the seed, then rotate immediately after first login.
+For production, set strong unique values in the hosting environment **before** running the seed.
 
 ## API overview
 
 ### Public
 
-- `POST /api/registrations` — create registration
-- `GET /api/health` — health check
+- `POST /api/registrations` â€” create registration
+- `GET /api/health` â€” health check
 
 ### Auth
 
 - `POST /api/admin/login`
 - `POST /api/admin/logout`
 - `GET /api/admin/me`
-- `POST /api/admin/change-password`
 
 ### Protected admin
 
@@ -154,6 +148,18 @@ Suggested architecture:
 4. Start with `npm run build && npm start`.
 5. Confirm `GET /api/health` returns healthy.
 
+### Deploy frontend on Netlify
+
+Netlify only hosts the **frontend**. Requests to `https://your-site.netlify.app/api/...` will **404** — that is expected until the API is hosted elsewhere.
+
+**Full steps:** see [DEPLOY.md](./DEPLOY.md) (Netlify + Render).
+
+Summary:
+
+1. Deploy the Express API on **Render** (not Netlify).
+2. On Netlify set `VITE_API_BASE_URL=https://YOUR-RENDER-URL/api` and redeploy.
+3. On Render set `CORS_ORIGIN=https://emergenttechnologies.netlify.app`, `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=none`.
+
 ### Frontend deploy checklist
 
 1. Set `VITE_API_BASE_URL` to the public API URL (for example `https://api.yourdomain.com/api`) **or** reverse-proxy `/api` to the backend on the same domain.
@@ -164,9 +170,9 @@ Suggested architecture:
 
 Configure the reverse proxy so:
 
-- `/` → frontend
-- `/admin` and `/admin/*` → frontend SPA
-- `/api/*` → backend
+- `/` â†’ frontend
+- `/admin` and `/admin/*` â†’ frontend SPA
+- `/api/*` â†’ backend
 
 This keeps cookies first-party and simplifies CORS (`CORS_ORIGIN=https://yourdomain.com`).
 
@@ -200,84 +206,14 @@ Store dumps encrypted and off-host. Test restores periodically.
 
 - Responsive public site with sticky header, compact hero, swipeable work carousel
 - Registration form with frontend + backend Zod validation and privacy consent
-- UUID registration IDs persisted in PostgreSQL via Prisma
-- Secure admin login, logout, session checks, forced password change
+- UUID registration IDs persisted via Prisma (PostgreSQL)
+- Secure admin login, logout, and session checks
 - Dashboard stats, searchable/filterable/paginated table, detail view, CSV export
 - Automated tests and deployment documentation
 
 ## Acceptance path
 
 1. Register on the public form → receive a unique registration ID.
-2. Confirm the record exists in PostgreSQL (`registrations` table).
+2. Confirm the record is saved in the database.
 3. Sign in at `/admin` with seeded credentials.
-4. Change the initial password.
-5. View users on `/admin/dashboard`, search/filter, open details, export CSV.
-
-responsively across desktop and mobile devices.
-
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-    return next();
-  }
-True
-True
-True
-True
-
-The full-stack Emergent Technologies app is in emergent/ — React + Express + Prisma/PostgreSQL, with registration, secure admin auth, and dashboard.
-
-What's included
-Area	Details
-Public site
-Sticky header, ~200px hero, swipeable work carousel, registration form
-Registration
-Zod validation (front + back), UUID IDs, privacy consent, copyable success ID
-Admin
-/admin login, forced first password change, /admin/dashboard
-Dashboard
-Stats, search/filter/sort/pagination, detail view, CSV export (formula-safe)
-Security
-bcrypt hashes, HTTP-only sessions, Helmet, CORS, rate limits, lockout, CSRF origin checks, redacted logs
-Docs
-.env.example, README.md, docker-compose.yml
-Setup (needs PostgreSQL)
-Docker wasn't available on this machine, so start Postgres first (Docker Desktop recommended):
-
-cd emergent
-cp .env.example .env
-docker compose up -d
-cd backend
-npm install
-npx prisma migrate deploy
-npm run prisma:seed
-npm run dev
-# new terminal
-cd frontend
-npm install
-npm run dev
-Site: http://localhost:5173
-Admin: http://localhost:5173/admin
-Bootstrap: Emergent / Password1 (must change on first login)
-Test results
-Backend: 11 passed
-Frontend: 12 passed
-Production builds for both succeed
-Project layout
-emergent/
-├── frontend/     # React + Vite + Tailwind
-├── backend/      # Express + Prisma API
-├── docker-compose.yml
-├── .env.example
-└── README.md     # local + production deployment guide
-After Docker is installed, run the commands above and you can register a user, see the UUID, log into admin, and manage exports end-to-end.
-
-
-
-That background step failed earlier for two reasons: Docker wasn’t installed (so Postgres couldn’t start), and the Prisma CLI was on an unusable RC (later pinned to stable 5.22).
-
-The app itself is still in good shape — installs, builds, and unit tests already passed. To run the full stack locally, install Docker Desktop (or another PostgreSQL 16 instance), then:
-
-cd emergent
-docker compose up -d
-cd backend
-npx prisma migrate deploy
-npm run prisma:seed
+4. View users on `/admin/dashboard`, search/filter, open details, export CSV.

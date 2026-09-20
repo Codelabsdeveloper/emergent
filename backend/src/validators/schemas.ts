@@ -3,6 +3,22 @@ import { z } from 'zod';
 
 export const genderSchema = z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY']);
 
+/** Normalize to E.164; accepts +country… or local numbers with default region IN. */
+export function normalizePhoneNumber(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const withPlus = trimmed.startsWith('+') ? trimmed : `+${trimmed.replace(/^0+/, '')}`;
+  let phone = parsePhoneNumberFromString(withPlus);
+  if (!phone?.isValid()) {
+    phone = parsePhoneNumberFromString(trimmed, 'IN');
+  }
+  if (!phone?.isValid()) {
+    phone = parsePhoneNumberFromString(trimmed, 'US');
+  }
+  return phone?.isValid() ? phone.format('E.164') : null;
+}
+
 export const registrationSchema = z.object({
   name: z
     .string()
@@ -20,10 +36,17 @@ export const registrationSchema = z.object({
     .trim()
     .min(5, 'Phone number is required')
     .max(30, 'Phone number is too long')
-    .refine((value) => {
-      const phone = parsePhoneNumberFromString(value);
-      return Boolean(phone?.isValid());
-    }, 'Enter a valid phone number including country code (e.g. +14155552671)'),
+    .transform((value, ctx) => {
+      const normalized = normalizePhoneNumber(value);
+      if (!normalized) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Enter a valid phone number (e.g. +919876543210 or 9876543210)',
+        });
+        return z.NEVER;
+      }
+      return normalized;
+    }),
   address: z
     .string()
     .trim()
@@ -43,22 +66,6 @@ export const loginSchema = z.object({
   username: z.string().trim().min(1, 'Username is required').max(50),
   password: z.string().min(1, 'Password is required').max(128),
 });
-
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z
-      .string()
-      .min(8, 'New password must be at least 8 characters')
-      .max(128)
-      .regex(/[A-Z]/, 'New password must include an uppercase letter')
-      .regex(/[a-z]/, 'New password must include a lowercase letter')
-      .regex(/[0-9]/, 'New password must include a number'),
-  })
-  .refine((data) => data.currentPassword !== data.newPassword, {
-    message: 'New password must be different from the current password',
-    path: ['newPassword'],
-  });
 
 const optionalDateString = z
   .string()
@@ -86,5 +93,4 @@ export const registrationsQuerySchema = z.object({
 
 export type RegistrationInput = z.infer<typeof registrationSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type RegistrationsQuery = z.infer<typeof registrationsQuerySchema>;

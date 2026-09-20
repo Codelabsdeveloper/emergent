@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin, requirePasswordChanged } from '../middleware/auth';
+import { requireAdmin } from '../middleware/auth';
 import {
   exportRegistrationsCsv,
   getDashboardStats,
@@ -10,7 +10,7 @@ import { registrationsQuerySchema } from '../validators/schemas';
 
 const router = Router();
 
-router.use(requireAdmin, requirePasswordChanged);
+router.use(requireAdmin);
 
 router.get('/dashboard/stats', async (_req, res, next) => {
   try {

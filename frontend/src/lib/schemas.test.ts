@@ -22,8 +22,13 @@ describe('registrationFormSchema', () => {
   });
 
   it('rejects invalid phone numbers', () => {
-    const result = registrationFormSchema.safeParse({ ...valid, phoneNumber: '555-1234' });
+    const result = registrationFormSchema.safeParse({ ...valid, phoneNumber: 'abc' });
     expect(result.success).toBe(false);
+  });
+
+  it('accepts Indian local numbers', () => {
+    const result = registrationFormSchema.safeParse({ ...valid, phoneNumber: '9876543210' });
+    expect(result.success).toBe(true);
   });
 
   it('requires consent', () => {

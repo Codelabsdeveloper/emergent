@@ -5,7 +5,6 @@ type AuthState = {
   loading: boolean;
   authenticated: boolean;
   username: string | null;
-  mustChangePassword: boolean;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -16,18 +15,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
-  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
       const { data } = await api.get('/admin/me');
       setAuthenticated(Boolean(data.data.authenticated));
       setUsername(data.data.username ?? null);
-      setMustChangePassword(Boolean(data.data.mustChangePassword));
     } catch {
       setAuthenticated(false);
       setUsername(null);
-      setMustChangePassword(false);
     } finally {
       setLoading(false);
     }
@@ -41,12 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await api.post('/admin/logout');
     setAuthenticated(false);
     setUsername(null);
-    setMustChangePassword(false);
   }, []);
 
   const value = useMemo(
-    () => ({ loading, authenticated, username, mustChangePassword, refresh, logout }),
-    [loading, authenticated, username, mustChangePassword, refresh, logout]
+    () => ({ loading, authenticated, username, refresh, logout }),
+    [loading, authenticated, username, refresh, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

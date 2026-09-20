@@ -38,8 +38,8 @@ function buildWhere(query: RegistrationsQuery): Prisma.RegistrationWhereInput {
 
   if (query.search) {
     const or: Prisma.RegistrationWhereInput[] = [
-      { name: { contains: query.search } },
-      { phoneNumber: { contains: query.search } },
+      { name: { contains: query.search, mode: 'insensitive' } },
+      { phoneNumber: { contains: query.search, mode: 'insensitive' } },
     ];
     if (isUuid(query.search)) {
       or.push({ id: query.search });

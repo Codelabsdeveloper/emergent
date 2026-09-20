@@ -143,11 +143,11 @@ export default function RegistrationForm() {
                 id="phoneNumber"
                 type="tel"
                 className="input-field"
-                placeholder="+14155552671"
+                placeholder="+919876543210 or 9876543210"
                 autoComplete="tel"
                 {...register('phoneNumber')}
               />
-              {errors.phoneNumber && <p className="error-text">{errors.phoneNumber.message}</p>}
+              <p className="mt-1 text-xs text-muted">Include country code when possible (India: +91).</p>              {errors.phoneNumber && <p className="error-text">{errors.phoneNumber.message}</p>}
             </div>
           </div>
 

@@ -8,7 +8,7 @@ import api, { getErrorMessage } from '../lib/api';
 import { loginFormSchema, type LoginFormValues } from '../lib/schemas';
 
 export default function AdminLoginPage() {
-  const { authenticated, mustChangePassword, loading, refresh } = useAuth();
+  const { authenticated, loading, refresh } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,12 +22,7 @@ export default function AdminLoginPage() {
   });
 
   if (!loading && authenticated) {
-    return (
-      <Navigate
-        to={mustChangePassword ? '/admin/change-password' : '/admin/dashboard'}
-        replace
-      />
-    );
+    return <Navigate to="/admin/dashboard" replace />;
   }
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -35,9 +30,9 @@ export default function AdminLoginPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const { data } = await api.post('/admin/login', values);
+      await api.post('/admin/login', values);
       await refresh();
-      navigate(data.data.mustChangePassword ? '/admin/change-password' : '/admin/dashboard');
+      navigate('/admin/dashboard');
     } catch (err) {
       setError(getErrorMessage(err, 'Login failed. Please check your credentials.'));
     } finally {

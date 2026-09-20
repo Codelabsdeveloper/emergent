@@ -24,11 +24,11 @@ async function main() {
     create: {
       username,
       passwordHash,
-      mustChangePassword: true,
+      mustChangePassword: false,
     },
   });
 
-  console.log(`Admin seeded: ${admin.username} (mustChangePassword=${admin.mustChangePassword})`);
+  console.log(`Admin seeded: ${admin.username}`);
 }
 
 main()

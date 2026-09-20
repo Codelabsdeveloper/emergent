@@ -34,4 +34,12 @@ describe('registrationSchema', () => {
     expect(registrationSchema.safeParse({ ...valid, age: 0 }).success).toBe(false);
     expect(registrationSchema.safeParse({ ...valid, phoneNumber: 'abc' }).success).toBe(false);
   });
+
+  it('accepts local Indian phone numbers', () => {
+    const result = registrationSchema.safeParse({ ...valid, phoneNumber: '9876543210' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.phoneNumber).toBe('+919876543210');
+    }
+  });
 });

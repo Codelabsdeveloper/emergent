@@ -7,6 +7,14 @@ export const genderOptions = [
   { value: 'PREFER_NOT_TO_SAY', label: 'Prefer not to say' },
 ] as const;
 
+/** Accept E.164 (+…) or common 10-digit local numbers (e.g. India). */
+function isValidPhone(value: string): boolean {
+  const trimmed = value.trim().replace(/[\s()-]/g, '');
+  if (/^\+[1-9]\d{6,14}$/.test(trimmed)) return true;
+  if (/^[6-9]\d{9}$/.test(trimmed)) return true;
+  return false;
+}
+
 export const registrationFormSchema = z.object({
   name: z
     .string()
@@ -26,7 +34,7 @@ export const registrationFormSchema = z.object({
     .trim()
     .min(5, 'Phone number is required')
     .max(30, 'Phone number is too long')
-    .regex(/^\+[1-9]\d{6,14}$/, 'Use international format with country code (e.g. +14155552671)'),
+    .refine(isValidPhone, 'Enter a valid phone number (e.g. +919876543210 or 9876543210)'),
   address: z
     .string()
     .trim()
@@ -50,21 +58,3 @@ export const loginFormSchema = z.object({
 });
 
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
-
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z
-      .string()
-      .min(8, 'New password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Must include an uppercase letter')
-      .regex(/[a-z]/, 'Must include a lowercase letter')
-      .regex(/[0-9]/, 'Must include a number'),
-    confirmPassword: z.string().min(1, 'Confirm your new password'),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  });
-
-export type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;

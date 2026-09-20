@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { requireAdmin } from '../middleware/auth';
-import { authenticateAdmin, changeAdminPassword, getAdminById } from '../services/authService';
-import { changePasswordSchema, loginSchema } from '../validators/schemas';
+import { authenticateAdmin, getAdminById } from '../services/authService';
+import { loginSchema } from '../validators/schemas';
 
 const router = Router();
 
@@ -19,13 +18,11 @@ router.post('/login', async (req, res, next) => {
 
     req.session.adminId = admin.id;
     req.session.username = admin.username;
-    req.session.mustChangePassword = admin.mustChangePassword;
 
     res.json({
       success: true,
       data: {
         username: admin.username,
-        mustChangePassword: admin.mustChangePassword,
       },
     });
   } catch (error) {
@@ -53,29 +50,15 @@ router.get('/me', async (req, res, next) => {
       return res.json({ success: true, data: { authenticated: false } });
     }
 
-    req.session.mustChangePassword = admin.mustChangePassword;
-
     return res.json({
       success: true,
       data: {
         authenticated: true,
         username: admin.username,
-        mustChangePassword: admin.mustChangePassword,
       },
     });
   } catch (error) {
     return next(error);
-  }
-});
-
-router.post('/change-password', requireAdmin, async (req, res, next) => {
-  try {
-    const data = changePasswordSchema.parse(req.body);
-    const result = await changeAdminPassword(req.session.adminId!, data);
-    req.session.mustChangePassword = false;
-    res.json({ success: true, data: result });
-  } catch (error) {
-    next(error);
   }
 });
 

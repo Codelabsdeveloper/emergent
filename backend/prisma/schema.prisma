@@ -3,22 +3,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Registration {
-  id          String   @id @default(uuid())
-  name        String
-  gender      String
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(100)
+  gender      String   @db.VarChar(32)
   age         Int
-  phoneNumber String   @map("phone_number")
-  address     String
-  occupation  String
+  phoneNumber String   @map("phone_number") @db.VarChar(30)
+  address     String   @db.VarChar(500)
+  occupation  String   @db.VarChar(100)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  @@index([createdAt])
+  @@index([createdAt(sort: Desc)])
   @@index([name])
   @@index([phoneNumber])
   @@index([gender])
@@ -26,8 +26,8 @@ model Registration {
 }
 
 model Admin {
-  id                  String    @id @default(uuid())
-  username            String    @unique
+  id                  String    @id @default(uuid()) @db.Uuid
+  username            String    @unique @db.VarChar(50)
   passwordHash        String    @map("password_hash")
   mustChangePassword  Boolean   @default(true) @map("must_change_password")
   failedLoginAttempts Int       @default(0) @map("failed_login_attempts")

@@ -3,11 +3,10 @@ import { useAuth } from '../context/AuthContext';
 
 type Props = {
   children: React.ReactNode;
-  allowPasswordChange?: boolean;
 };
 
-export default function ProtectedRoute({ children, allowPasswordChange = false }: Props) {
-  const { loading, authenticated, mustChangePassword } = useAuth();
+export default function ProtectedRoute({ children }: Props) {
+  const { loading, authenticated } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -20,14 +19,6 @@ export default function ProtectedRoute({ children, allowPasswordChange = false }
 
   if (!authenticated) {
     return <Navigate to="/admin" replace state={{ from: location }} />;
-  }
-
-  if (mustChangePassword && !allowPasswordChange) {
-    return <Navigate to="/admin/change-password" replace />;
-  }
-
-  if (!mustChangePassword && allowPasswordChange && location.pathname === '/admin/change-password') {
-    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <>{children}</>;

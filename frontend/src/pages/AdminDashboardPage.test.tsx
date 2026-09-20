@@ -26,7 +26,7 @@ describe('AdminDashboardPage', () => {
         return {
           data: {
             success: true,
-            data: { authenticated: true, username: 'Emergent', mustChangePassword: false },
+            data: { authenticated: true, username: 'Emergent' },
           },
         } as never;
       }
@@ -40,7 +40,7 @@ describe('AdminDashboardPage', () => {
         return {
           data: {
             success: true,
-            data: { authenticated: true, username: 'Emergent', mustChangePassword: false },
+            data: { authenticated: true, username: 'Emergent' },
           },
         } as never;
       }
@@ -82,7 +82,7 @@ describe('AdminDashboardPage', () => {
         return {
           data: {
             success: true,
-            data: { authenticated: true, username: 'Emergent', mustChangePassword: false },
+            data: { authenticated: true, username: 'Emergent' },
           },
         } as never;
       }

@@ -18,10 +18,16 @@ export const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProduction,
   port: Number(process.env.PORT || 4000),
-  databaseUrl: required('DATABASE_URL', 'file:./dev.db'),
+  databaseUrl: required(
+    'DATABASE_URL',
+    'postgresql://emergent:emergent_dev_password@localhost:5432/emergent'
+  ),
   sessionSecret: required('SESSION_SECRET', 'dev-only-change-me-session-secret-32chars'),
   corsOrigin: required('CORS_ORIGIN', 'http://localhost:5173'),
   cookieSecure: process.env.COOKIE_SECURE === 'true' || isProduction,
+  // Required when frontend (Netlify) and API (Render) are on different domains
+  cookieSameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none' | undefined) ||
+    (isProduction ? 'none' : 'lax'),
   sessionMaxAgeMs: Number(process.env.SESSION_MAX_AGE_MS || 1000 * 60 * 60 * 8),
   adminUsername: process.env.ADMIN_USERNAME || 'Emergent',
   adminPassword: process.env.ADMIN_PASSWORD || 'Password1',

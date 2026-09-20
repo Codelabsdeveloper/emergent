@@ -1,3 +1,4 @@
+import connectPgSimple from 'connect-pg-simple';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -13,9 +14,23 @@ import adminRoutes from './routes/admin';
 import registrationRoutes from './routes/registrations';
 import { logger } from './utils/logger';
 
+const PgSession = connectPgSimple(session);
+
 type CreateAppOptions = {
   sessionStore?: Store;
 };
+
+function createSessionStore(override?: Store): Store {
+  if (override) return override;
+  if (env.nodeEnv === 'test') return new MemoryStore();
+
+  // Persist sessions in PostgreSQL for production / multi-instance safety
+  return new PgSession({
+    conString: env.databaseUrl,
+    tableName: 'session',
+    createTableIfMissing: true,
+  });
+}
 
 export function createApp(options: CreateAppOptions = {}) {
   const app = express();
@@ -41,21 +56,17 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use(cookieParser());
   app.use(csrfOriginCheck);
 
-  // File/SQLite local setups use in-memory session store (single-process friendly).
-  // For multi-instance production, swap to a shared store (Redis / Postgres).
-  const store = options.sessionStore ?? new MemoryStore();
-
   app.use(
     session({
       name: 'emergent.sid',
-      store,
+      store: createSessionStore(options.sessionStore),
       secret: env.sessionSecret,
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
         secure: env.cookieSecure,
-        sameSite: env.isProduction ? 'strict' : 'lax',
+        sameSite: env.cookieSameSite,
         maxAge: env.sessionMaxAgeMs,
       },
     })
@@ -114,7 +125,7 @@ export function createApp(options: CreateAppOptions = {}) {
 
 export async function startServer() {
   const app = createApp();
-  app.listen(env.port, () => {
+  app.listen(env.port, '0.0.0.0', () => {
     logger.info(`Server listening on port ${env.port}`, { env: env.nodeEnv });
   });
 }

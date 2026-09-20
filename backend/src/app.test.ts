@@ -98,7 +98,7 @@ describe('API integration (mocked database)', () => {
       id: 'admin-1',
       username: 'Emergent',
       passwordHash,
-      mustChangePassword: true,
+      mustChangePassword: false,
       failedLoginAttempts: 0,
       lockedUntil: null,
     } as never);
@@ -111,7 +111,6 @@ describe('API integration (mocked database)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.username).toBe('Emergent');
-    expect(res.body.data.mustChangePassword).toBe(true);
   });
 
   it('blocks unauthorized access to protected routes', async () => {
